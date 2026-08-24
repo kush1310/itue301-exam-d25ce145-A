@@ -1,12 +1,8 @@
 /**
  * AuthContext Module
  *
- * Provides application-wide authentication state containing customer profile,
- * JWT token, login dispatch, and logout handling with localStorage persistence.
- *
- * @validates - Checks validity of stored token on initialization.
- * @redirects - Facilitates conditional redirection across protected application routes.
- * @edge-cases - Corrupted localStorage JSON, expired token handling, network failure during login.
+ * Provides application-wide authentication state with Role-Based Access Control (RBAC).
+ * Supports role verification to strictly prevent cross-role authentication.
  */
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
@@ -45,17 +41,23 @@ export const AuthProvider = ({ children }) => {
   /**
    * login
    *
-   * Authenticates customer against the backend API endpoint.
+   * Authenticates customer against the backend API endpoint with optional role enforcement.
    *
-   * @param  {string} email    - Customer registered email address
-   * @param  {string} password - Plaintext password
+   * @param  {string} email        - Registered email address
+   * @param  {string} password     - Plaintext password
+   * @param  {string} [requiredRole] - Required role verification ('Customer' | 'Admin')
    * @returns {Promise<{success: boolean, message?: string}>}
    */
-  const login = async (email, password) => {
+  const login = async (email, password, requiredRole) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.post('/api/v1/auth/login', { email, password });
+      const response = await axios.post('/api/v1/auth/login', {
+        email,
+        password,
+        requiredRole
+      });
+
       if (response.data && response.data.success) {
         const { token: receivedToken, customer: receivedCustomer } = response.data.data;
         setToken(receivedToken);
@@ -66,7 +68,9 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
       return { success: false, message: 'Authentication returned unverified payload.' };
     } catch (err) {
-      const errorMessage = err.response?.data?.error?.message || 'Authentication failed. Please check your credentials.';
+      const errorMessage =
+        err.response?.data?.error?.message ||
+        'Authentication failed. Please check your credentials and selected role.';
       setError(errorMessage);
       setLoading(false);
       return { success: false, message: errorMessage };
@@ -90,6 +94,8 @@ export const AuthProvider = ({ children }) => {
   const value = {
     customer,
     token,
+    role: customer?.role || null,
+    isAdmin: customer?.role === 'Admin' || customer?.role === 'Restaurant Owner',
     isAuthenticated: Boolean(token && customer),
     loading,
     error,

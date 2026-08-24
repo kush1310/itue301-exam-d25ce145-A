@@ -1,14 +1,12 @@
 /**
- * App Root Component (Task 2 Routing Architecture)
+ * App Root Component (Task 2 Routing Architecture — Light Zomato Theme)
  *
  * Configures client-side routing via React Router DOM v6:
  * - / -> HomePage (Public)
  * - /restaurants -> RestaurantsPage (Public)
  * - /order -> OrderPage (Protected via ProtectedRoute wrapper)
- * - /admin -> AdminPanel (Lazy-loaded via React.lazy + Suspense)
- * - /login -> LoginPage (Public)
- *
- * Incorporates persistent Navbar, Footer, and Toast/Loading wrappers.
+ * - /admin -> AdminPanel (Lazy-loaded via React.lazy + Suspense, RBAC Protected for Admin)
+ * - /login -> LoginPage (Public with role segregation)
  */
 
 import React, { Suspense, lazy } from 'react';
@@ -30,7 +28,7 @@ const LazyAdminPanel = lazy(() => import('./pages/AdminPanel'));
 
 function App() {
   return (
-    <div className="flex flex-col min-h-screen bg-slate-950 text-slate-100 selection:bg-orange-500 selection:text-white">
+    <div className="flex flex-col min-h-screen bg-slate-50 text-slate-900 selection:bg-rose-500 selection:text-white">
       {/* Primary Sticky Header Navigation */}
       <Navbar />
 
@@ -53,19 +51,21 @@ function App() {
             }
           />
 
-          {/* Task 2: Lazy-Loaded Admin Route wrapped in React Suspense */}
+          {/* Task 2: Lazy-Loaded Admin Route wrapped in React Suspense & RBAC Protected */}
           <Route
             path="/admin"
             element={
-              <Suspense
-                fallback={
-                  <div className="flex items-center justify-center min-h-[60vh]">
-                    <LoadingSpinner message="Asynchronously loading Admin Panel bundle (React.lazy)..." />
-                  </div>
-                }
-              >
-                <LazyAdminPanel />
-              </Suspense>
+              <ProtectedRoute requiredRole="Admin">
+                <Suspense
+                  fallback={
+                    <div className="flex items-center justify-center min-h-[60vh]">
+                      <LoadingSpinner message="Asynchronously loading Admin Panel bundle (React.lazy)..." />
+                    </div>
+                  }
+                >
+                  <LazyAdminPanel />
+                </Suspense>
+              </ProtectedRoute>
             }
           />
 

@@ -2,18 +2,20 @@
  * Database Connection Module
  *
  * Establishes an asynchronous connection to the MongoDB Atlas cluster
- * using Mongoose ODM with connection pooling and event listeners.
+ * using Mongoose ODM with automated retry logic and exponential backoff.
  *
- * @param   {void}
- * @returns {Promise<typeof import('mongoose')>} - Resolves with the Mongoose instance on successful connection.
- * @validates - Checks existence of MONGO_URI in process.env before attempting connection.
- * @redirects - Terminates process with exit code 1 if connection fails fatally.
- * @edge-cases - Handles unhandled promise rejections, DNS timeouts, and initial connection failures gracefully.
+ * @param   {number} [retryCount=0] - Current connection attempt count
+ * @returns {Promise<typeof import('mongoose')>} - Resolves with Mongoose instance
+ * @validates - Checks presence of MONGO_URI in environment variables.
+ * @redirects - Terminates process if max retries exceeded.
+ * @edge-cases - Transient SSL handshake errors, network latency, DNS resolution glitches.
  */
 
 const mongoose = require('mongoose');
 
-const connectDB = async () => {
+const MAX_RETRIES = 5;
+
+const connectDB = async (retryCount = 0) => {
   const mongoUri = process.env.MONGO_URI;
 
   if (!mongoUri) {
@@ -23,15 +25,26 @@ const connectDB = async () => {
 
   try {
     const connectionInstance = await mongoose.connect(mongoUri, {
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
+      connectTimeoutMS: 15000,
+      family: 4 // Use IPv4 for stability across proxies
     });
 
     console.log(`[DATABASE_CONNECTED] MongoDB Host: ${connectionInstance.connection.host} | Database: ${connectionInstance.connection.name}`);
     return connectionInstance;
   } catch (connectionError) {
-    console.error(`[DATABASE_CONNECTION_FAILED] ${connectionError.message}`);
-    process.exit(1);
+    console.error(`[DATABASE_CONNECTION_ATTEMPT_${retryCount + 1}_FAILED] ${connectionError.message}`);
+
+    if (retryCount < MAX_RETRIES) {
+      const backoffMs = Math.min(1000 * Math.pow(2, retryCount), 8000);
+      console.log(`[DATABASE_RETRY] Retrying MongoDB connection in ${backoffMs}ms...`);
+      await new Promise((resolve) => setTimeout(resolve, backoffMs));
+      return connectDB(retryCount + 1);
+    } else {
+      console.error('[DATABASE_FATAL] Maximum MongoDB connection retries exceeded.');
+      process.exit(1);
+    }
   }
 };
 

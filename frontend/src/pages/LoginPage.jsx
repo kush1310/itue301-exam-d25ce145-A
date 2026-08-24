@@ -1,14 +1,18 @@
 /**
- * LoginPage Component
+ * LoginPage Component (Role-Segregated Authentication)
  *
- * Provides customer and administrative authentication interface
- * with validation, error messaging, and demo credential pre-fill utilities.
+ * Implements strict Role-Based Access Control (RBAC) login tabs:
+ * 1. Customer Login (Role = 'Customer')
+ * 2. Admin / Partner Portal (Role = 'Admin')
+ *
+ * Enforces server-side and client-side role matching so Customers cannot log in
+ * through the Admin portal and vice versa.
  */
 
 import React, { useState } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogIn, Lock, Mail, AlertCircle, CheckCircle, Shield } from 'lucide-react';
+import { LogIn, Lock, Mail, AlertCircle, ShieldAlert, User, CheckCircle2 } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 const LoginPage = () => {
@@ -16,96 +20,104 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Active Login Mode Tab ('Customer' | 'Admin')
+  const [activeTab, setActiveTab] = useState('Customer');
   const [email, setEmail] = useState('kush@charusat.edu.in');
   const [password, setPassword] = useState('password123');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
 
-  const from = location.state?.from?.pathname || '/order';
+  const from = location.state?.from?.pathname || (activeTab === 'Admin' ? '/admin' : '/order');
+
+  const handleTabSwitch = (newTab) => {
+    setActiveTab(newTab);
+    setErrorMessage(null);
+    if (newTab === 'Customer') {
+      setEmail('kush@charusat.edu.in');
+      setPassword('password123');
+    } else {
+      setEmail('admin@quickbite.com');
+      setPassword('adminpassword123');
+    }
+  };
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setErrorMessage(null);
 
-    const result = await login(email, password);
+    // Enforce requiredRole matching active tab to prevent cross-role login
+    const result = await login(email, password, activeTab);
 
     if (result.success) {
       setLoading(false);
-      navigate(from, { replace: true });
+      navigate(activeTab === 'Admin' ? '/admin' : from, { replace: true });
     } else {
-      setErrorMessage(result.message || 'Invalid credentials provided.');
+      setErrorMessage(result.message || 'Authentication failed.');
       setLoading(false);
     }
   };
 
-  const fillCustomerCredentials = () => {
-    setEmail('kush@charusat.edu.in');
-    setPassword('password123');
-    setErrorMessage(null);
-  };
-
-  const fillAdminCredentials = () => {
-    setEmail('admin@quickbite.com');
-    setPassword('adminpassword123');
-    setErrorMessage(null);
-  };
-
   return (
     <div className="min-h-[75vh] flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md bg-slate-900/90 border border-slate-800 rounded-2xl p-8 shadow-2xl space-y-6">
+      <div className="w-full max-w-md bg-white border border-slate-200/90 rounded-3xl p-8 shadow-xl space-y-6">
         {/* Card Header */}
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-2xl bg-orange-500/10 border border-orange-500/20 text-orange-400 mx-auto flex items-center justify-center">
-            <LogIn className="w-6 h-6" />
+          <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 mx-auto flex items-center justify-center shadow-xs">
+            {activeTab === 'Admin' ? <ShieldAlert className="w-6 h-6" /> : <User className="w-6 h-6" />}
           </div>
-          <h1 className="text-2xl font-extrabold text-white tracking-tight">
-            Account Login
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+            {activeTab === 'Admin' ? 'Admin / Partner Portal' : 'Customer Sign In'}
           </h1>
-          <p className="text-xs text-slate-400">
-            Sign in to access protected ordering and restaurant management
+          <p className="text-xs text-slate-500 font-medium">
+            Strict Role-Based Access Control (RBAC) Authentication
           </p>
+        </div>
+
+        {/* Role Selection Tabs */}
+        <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-2xl">
+          <button
+            type="button"
+            id="tab-customer-login"
+            onClick={() => handleTabSwitch('Customer')}
+            className={`py-2.5 text-xs font-bold rounded-xl transition-all ${
+              activeTab === 'Customer'
+                ? 'bg-white text-rose-600 shadow-sm'
+                : 'text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            Customer Login
+          </button>
+          <button
+            type="button"
+            id="tab-admin-login"
+            onClick={() => handleTabSwitch('Admin')}
+            className={`py-2.5 text-xs font-bold rounded-xl transition-all ${
+              activeTab === 'Admin'
+                ? 'bg-white text-rose-600 shadow-sm'
+                : 'text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            Admin Portal
+          </button>
         </div>
 
         {/* Error Alert */}
         {errorMessage && (
-          <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-start gap-3 text-xs text-rose-300">
-            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+          <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 flex items-start gap-3 text-xs text-rose-700 font-medium shadow-xs">
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
             <span>{errorMessage}</span>
           </div>
         )}
 
-        {/* Demo Quick-Fill Buttons */}
-        <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2 text-xs">
-          <span className="text-slate-400 font-semibold block text-[11px] uppercase tracking-wider">
-            Quick-Fill Demo Credentials:
-          </span>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={fillCustomerCredentials}
-              className="flex-1 py-1.5 px-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 hover:text-white hover:border-orange-500/50 transition-colors text-center"
-            >
-              Customer (Kush)
-            </button>
-            <button
-              type="button"
-              onClick={fillAdminCredentials}
-              className="flex-1 py-1.5 px-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 hover:text-white hover:border-orange-500/50 transition-colors text-center"
-            >
-              Admin User
-            </button>
-          </div>
-        </div>
-
         {/* Form */}
         <form onSubmit={handleLoginSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <label htmlFor="login-email-input" className="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
-              Email Address
+            <label htmlFor="login-email-input" className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+              {activeTab} Email Address
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                 <Mail className="w-4 h-4" />
               </div>
               <input
@@ -115,17 +127,17 @@ const LoginPage = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@charusat.edu.in"
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 shadow-xs"
               />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <label htmlFor="login-password-input" className="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
+            <label htmlFor="login-password-input" className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
               Password
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                 <Lock className="w-4 h-4" />
               </div>
               <input
@@ -135,7 +147,7 @@ const LoginPage = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 shadow-xs"
               />
             </div>
           </div>
@@ -144,21 +156,21 @@ const LoginPage = () => {
             type="submit"
             id="login-submit-button"
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-md shadow-orange-500/20 transition-all disabled:opacity-50 mt-2"
+            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-white bg-gradient-to-r from-rose-600 to-orange-500 hover:from-rose-700 hover:to-orange-600 shadow-md shadow-rose-500/20 transition-all disabled:opacity-50 mt-2"
           >
             {loading ? (
               <LoadingSpinner message="Authenticating..." />
             ) : (
               <>
                 <LogIn className="w-4 h-4" />
-                <span>Sign In to QuickBite</span>
+                <span>Sign In as {activeTab}</span>
               </>
             )}
           </button>
         </form>
 
-        <div className="text-center text-xs text-slate-500">
-          ITUE301 Set A Practical Exam · Authentication Subsystem
+        <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 text-[11px] text-slate-500 text-center font-medium">
+          Protected by Role-Based JWT tokens. Cross-role login is strictly blocked.
         </div>
       </div>
     </div>

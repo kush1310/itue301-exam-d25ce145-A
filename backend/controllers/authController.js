@@ -1,8 +1,8 @@
 /**
  * Authentication Controller
  *
- * Handles customer authentication, registration, and JWT token issuance
- * for the QuickBite Food Ordering System.
+ * Handles customer & administrator authentication, registration, and JWT token issuance
+ * with strict Role-Based Access Control (RBAC) validation for QuickBite.
  */
 
 const jwt = require('jsonwebtoken');
@@ -11,10 +11,10 @@ const Customer = require('../models/Customer');
 /**
  * generateToken Helper
  *
- * Signs a JSON Web Token with customer identifier and payload.
+ * Signs a JSON Web Token with customer identifier and authorization role.
  *
  * @param  {string} id   - Customer MongoDB ObjectId
- * @param  {string} role - User authorization role
+ * @param  {string} role - User authorization role ('Customer' | 'Admin' | 'Restaurant Owner')
  * @returns {string}     - Signed JWT Bearer token string
  */
 const generateToken = (id, role) => {
@@ -26,20 +26,20 @@ const generateToken = (id, role) => {
 /**
  * loginCustomer
  *
- * Validates submitted customer credentials against the database.
- * On success, generates a signed JWT and returns customer details.
+ * Validates submitted credentials against the database.
+ * Enforces role verification when requested (e.g. Admin Portal vs Customer App).
  *
- * @param  {import('express').Request} req   - Request containing { email, password }
+ * @param  {import('express').Request} req   - Request containing { email, password, requiredRole }
  * @param  {import('express').Response} res  - Response returning token and customer profile
  * @param  {import('express').NextFunction} next - Next error callback
- * @returns {Promise<Response>}              - 200 OK with token or 401 Unauthorized
- * @validates - Email format, password presence, customer existence, password match.
+ * @returns {Promise<Response>}              - 200 OK with token, 401 Unauthorized, or 403 Forbidden
+ * @validates - Email format, password presence, customer existence, password match, role matching.
  * @redirects - N/A
- * @edge-cases - Non-existent email, incorrect password, inactive customer profile.
+ * @edge-cases - Non-existent email, incorrect password, customer attempting admin portal login.
  */
 const loginCustomer = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, requiredRole } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({
@@ -77,6 +77,18 @@ const loginCustomer = async (req, res, next) => {
       });
     }
 
+    // Role-based segregation enforcement
+    if (requiredRole && customer.role !== requiredRole) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          code: 'ROLE_MISMATCH',
+          status: 403,
+          message: `Access Denied: This account has role '${customer.role}' and cannot log in through the '${requiredRole}' portal.`
+        }
+      });
+    }
+
     const token = generateToken(customer._id, customer.role);
 
     return res.status(200).json({
@@ -103,11 +115,6 @@ const loginCustomer = async (req, res, next) => {
  * registerCustomer
  *
  * Registers a new customer account and returns a signed JWT.
- *
- * @param  {import('express').Request} req   - Request body with name, email, password, phone, address
- * @param  {import('express').Response} res  - Response with 201 Created and JWT token
- * @param  {import('express').NextFunction} next - Error middleware callback
- * @returns {Promise<Response>}
  */
 const registerCustomer = async (req, res, next) => {
   try {
