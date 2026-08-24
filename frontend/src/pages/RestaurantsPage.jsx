@@ -1,9 +1,9 @@
 /**
- * RestaurantsPage Component (Task 4 — Light Zomato Style)
+ * RestaurantsPage Component (Task 4 — Zomato Design System)
  *
  * Retrieves live restaurant records from Express REST API (GET /api/v1/restaurants) on mount via useEffect.
  * Maintains 3 strict states: data (restaurants), loading, and error.
- * Features client-side search input filtering cached restaurants by name or cuisine without re-fetching API.
+ * Features Zomato Filter Pills and client-side instant search input.
  * Renders data through the reusable RestaurantCard component (Task 1).
  */
 
@@ -12,7 +12,7 @@ import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import RestaurantCard from '../components/RestaurantCard';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { Search, AlertCircle, RefreshCw, Filter, Store, Sparkles } from 'lucide-react';
+import { Search, AlertCircle, RefreshCw, Filter, Sparkles } from 'lucide-react';
 
 const RestaurantsPage = () => {
   const [searchParams] = useSearchParams();
@@ -30,7 +30,6 @@ const RestaurantsPage = () => {
   /**
    * fetchRestaurants
    * Dispatches GET /api/v1/restaurants via Axios.
-   * Ensures loading is set to false in both success and error branches.
    */
   const fetchRestaurants = () => {
     setLoading(true);
@@ -44,7 +43,7 @@ const RestaurantsPage = () => {
         } else {
           setError('Unexpected response format received from server.');
         }
-        setLoading(false); // Set loading to false on success
+        setLoading(false);
       })
       .catch((err) => {
         console.error('[RESTAURANTS_FETCH_ERROR]', err);
@@ -52,16 +51,15 @@ const RestaurantsPage = () => {
           err.response?.data?.error?.message ||
           'Failed to connect to the backend server. Please verify Express API is active.';
         setError(serverError);
-        setLoading(false); // Set loading to false on error
+        setLoading(false);
       });
   };
 
-  // Task 4: useEffect triggers API fetch on initial component mount
   useEffect(() => {
     fetchRestaurants();
   }, []);
 
-  // Task 4: Client-side search input filters already-fetched array by name or cuisine without re-querying API
+  // Task 4: Client-side search input filters already-fetched array without re-querying API
   const filteredRestaurants = restaurants.filter((restaurant) => {
     const matchesSearch =
       restaurant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -77,83 +75,83 @@ const RestaurantsPage = () => {
   });
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-7">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-6">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#f4f4f2] pb-6">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 text-rose-700 text-xs font-bold uppercase tracking-wider mb-2 border border-rose-200">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#fef2f2] text-[#cb202d] text-[12px] font-bold uppercase tracking-wider mb-2 border border-[#fecaca]">
             <Sparkles className="w-3.5 h-3.5" />
             <span>Campus Dining Partners</span>
           </div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-3xl font-bold text-[#2d2d2d] tracking-tight">
             Explore Campus Restaurants
           </h1>
-          <p className="text-sm text-slate-500 mt-1 font-medium">
+          <p className="text-[14px] text-[#828282] mt-1 font-medium">
             Browse live eateries, check operational status, and explore menus at CHARUSAT.
           </p>
         </div>
 
         {/* Total Count & Refresh Action */}
         <div className="flex items-center gap-3">
-          <div className="px-4 py-2 rounded-2xl bg-white border border-slate-200 text-sm shadow-xs font-semibold text-slate-700">
+          <div className="px-4 py-2 rounded-[12px] bg-white border border-[#e8e8e8] text-[13px] shadow-xs font-semibold text-[#2d2d2d]">
             <span>Partners: </span>
-            <span className="font-extrabold text-rose-600">{restaurants.length}</span>
+            <span className="font-extrabold text-[#cb202d]">{restaurants.length}</span>
           </div>
           <button
             onClick={fetchRestaurants}
             title="Refresh list from server"
-            className="p-2.5 rounded-2xl bg-white border border-slate-200 text-slate-500 hover:text-slate-900 hover:border-slate-300 shadow-xs transition-colors"
+            className="p-2.5 rounded-[12px] bg-white border border-[#e8e8e8] text-[#828282] hover:text-[#2d2d2d] hover:border-[#cb202d] shadow-xs transition-colors"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-rose-600' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-[#cb202d]' : ''}`} />
           </button>
         </div>
       </div>
 
-      {/* Task 4: Client-side Search and Filter Controls */}
+      {/* Task 4: Client-side Search and Zomato Filter Pills */}
       <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
         {/* Search Input */}
         <div className="sm:col-span-8 relative">
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-            <Search className="w-5 h-5" />
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#828282]">
+            <Search className="w-4 h-4" />
           </div>
           <input
             id="restaurant-search-input"
             type="text"
-            placeholder="Search restaurants or cuisines (e.g. Pizza, Biryani, Pasta, Asian)..."
+            placeholder="Search for restaurants or cuisine (e.g. Pizza, Biryani, Pasta, Asian)..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-slate-800 placeholder-slate-400 text-sm font-medium shadow-xs focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all"
+            className="w-full pl-11 pr-4 py-3 bg-white border border-[#e8e8e8] rounded-[12px] text-[#2d2d2d] placeholder-[#828282] text-[14px] font-medium shadow-xs focus:outline-none focus:ring-2 focus:ring-[#cb202d]/20 focus:border-[#cb202d] transition-all"
           />
         </div>
 
-        {/* Operational Filter Switcher */}
-        <div className="sm:col-span-4 flex items-center gap-1.5 p-1 bg-white border border-slate-200 rounded-2xl shadow-xs">
+        {/* Filter Pills (Zomato Style) */}
+        <div className="sm:col-span-4 flex items-center gap-1.5 p-1 bg-[#f4f4f2] border border-[#e8e8e8] rounded-[12px]">
           <button
             onClick={() => setSelectedFilter('ALL')}
-            className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
+            className={`flex-1 py-2 text-[12px] font-bold rounded-[8px] transition-all ${
               selectedFilter === 'ALL'
-                ? 'bg-rose-600 text-white shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                ? 'bg-[#cb202d] text-white shadow-xs'
+                : 'text-[#2d2d2d] hover:bg-white'
             }`}
           >
             All ({restaurants.length})
           </button>
           <button
             onClick={() => setSelectedFilter('OPEN')}
-            className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
+            className={`flex-1 py-2 text-[12px] font-bold rounded-[8px] transition-all ${
               selectedFilter === 'OPEN'
-                ? 'bg-emerald-600 text-white shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                ? 'bg-[#24963f] text-white shadow-xs'
+                : 'text-[#2d2d2d] hover:bg-white'
             }`}
           >
             Open ({restaurants.filter((r) => r.isOpen).length})
           </button>
           <button
             onClick={() => setSelectedFilter('CLOSED')}
-            className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
+            className={`flex-1 py-2 text-[12px] font-bold rounded-[8px] transition-all ${
               selectedFilter === 'CLOSED'
-                ? 'bg-rose-500 text-white shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                ? 'bg-[#cb202d] text-white shadow-xs'
+                : 'text-[#2d2d2d] hover:bg-white'
             }`}
           >
             Closed ({restaurants.filter((r) => !r.isOpen).length})
@@ -163,21 +161,21 @@ const RestaurantsPage = () => {
 
       {/* 1) Task 4: Display Loading Indicator */}
       {loading && (
-        <div className="min-h-[40vh] flex items-center justify-center bg-white rounded-3xl border border-slate-200 shadow-xs">
-          <LoadingSpinner message="Fetching live campus eateries from Express REST API..." />
+        <div className="min-h-[40vh] flex items-center justify-center bg-white rounded-[16px] border border-[#f4f4f2] shadow-xs">
+          <LoadingSpinner message="Fetching campus eateries from Express REST API..." />
         </div>
       )}
 
       {/* 2) Task 4: Display Error Message on Request Failure */}
       {!loading && error && (
-        <div className="p-6 rounded-3xl bg-rose-50 border border-rose-200 flex items-start gap-4 shadow-xs">
-          <AlertCircle className="w-6 h-6 text-rose-600 shrink-0 mt-0.5" />
+        <div className="p-6 rounded-[16px] bg-[#fef2f2] border border-[#fecaca] flex items-start gap-4 shadow-xs">
+          <AlertCircle className="w-6 h-6 text-[#cb202d] shrink-0 mt-0.5" />
           <div className="space-y-2 flex-1">
-            <h3 className="text-base font-bold text-rose-900">API Connection Error</h3>
-            <p className="text-sm text-rose-700">{error}</p>
+            <h3 className="text-[15px] font-bold text-[#2d2d2d]">API Connection Error</h3>
+            <p className="text-[13px] text-[#828282]">{error}</p>
             <button
               onClick={fetchRestaurants}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-xs transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-[8px] text-[12px] font-bold bg-[#cb202d] hover:bg-[#a81723] text-white shadow-xs transition-colors"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               <span>Retry Fetching</span>
@@ -203,10 +201,10 @@ const RestaurantsPage = () => {
               ))}
             </div>
           ) : (
-            <div className="p-12 text-center bg-white rounded-3xl border border-slate-200 shadow-xs space-y-3">
-              <Filter className="w-8 h-8 text-slate-400 mx-auto" />
-              <h3 className="text-base font-bold text-slate-800">No matching restaurants found</h3>
-              <p className="text-xs text-slate-500 font-medium">
+            <div className="p-12 text-center bg-white rounded-[16px] border border-[#f4f4f2] shadow-xs space-y-3">
+              <Filter className="w-8 h-8 text-[#828282] mx-auto" />
+              <h3 className="text-[15px] font-bold text-[#2d2d2d]">No matching restaurants found</h3>
+              <p className="text-[13px] text-[#828282] font-medium">
                 Try adjusting your search keyword "{searchTerm}" or switching the status filter.
               </p>
               <button
@@ -214,7 +212,7 @@ const RestaurantsPage = () => {
                   setSearchTerm('');
                   setSelectedFilter('ALL');
                 }}
-                className="text-xs text-rose-600 hover:underline font-bold"
+                className="text-[13px] text-[#cb202d] hover:underline font-bold"
               >
                 Clear all filters
               </button>

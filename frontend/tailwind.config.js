@@ -7,18 +7,25 @@ export default {
   theme: {
     extend: {
       colors: {
-        brand: {
-          50: '#fff7ed',
-          100: '#ffedd5',
-          200: '#fed7aa',
-          300: '#fdba74',
-          400: '#fb923c',
-          500: '#f97316',
-          600: '#ea580c',
-          700: '#c2410c',
-          800: '#9a3412',
-          900: '#7c2d12',
+        zomato: {
+          red: '#cb202d',
+          darkred: '#a81723',
+          lightred: '#fef2f2',
+          mineshaft: '#2d2d2d',
+          desertstorm: '#f4f4f2',
+          muted: '#828282',
+          green: '#24963f',
+          lightgreen: '#edf7ed',
+          border: '#e8e8e8',
         }
+      },
+      fontFamily: {
+        sans: ['Okra', 'Inter', 'system-ui', 'sans-serif'],
+      },
+      borderRadius: {
+        'default': '8px',
+        'md': '12px',
+        'lg': '16px',
       }
     },
   },

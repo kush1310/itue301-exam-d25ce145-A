@@ -4,23 +4,26 @@
 
 @layer base {
   body {
-    @apply bg-slate-50 text-slate-900 font-sans antialiased min-h-screen;
-    background-image: radial-gradient(at 0% 0%, rgba(249, 115, 22, 0.04) 0px, transparent 50%),
-                      radial-gradient(at 100% 100%, rgba(225, 29, 72, 0.04) 0px, transparent 50%);
+    @apply bg-[#ffffff] text-[#2d2d2d] font-sans antialiased min-h-screen text-[14px] leading-[1.5];
+    background-color: #ffffff;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-[-0.01em] text-[#2d2d2d];
   }
 }
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #f8fafc;
+  background: #f4f4f2;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
+  background: #d4d4d2;
+  border-radius: 8px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #cb202d;
 }

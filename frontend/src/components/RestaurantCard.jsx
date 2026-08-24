@@ -1,7 +1,11 @@
 /**
- * RestaurantCard Component (Task 1 — Light Zomato Style)
+ * RestaurantCard Component (Task 1 — Zomato Design System)
  *
- * Reusable card component rendering individual restaurant details.
+ * Reusable card component rendering individual restaurant details:
+ * - Card: Background #ffffff, Border #f4f4f2, Radius 16px
+ * - The Rating Chip: High-contrast green box #24963f
+ * - Typography: Mine Shaft #2d2d2d & Muted #828282
+ * - Action: Zomato Red #cb202d
  *
  * @param {Object} props
  * @param {string} props.name     - Name of the restaurant
@@ -11,7 +15,6 @@
  * @param {string} [props._id]    - Optional restaurant identifier for direct navigation
  * @param {Function} [props.onSelect] - Optional selection callback
  * @returns {JSX.Element}
- * @validates - Handles undefined/null values with fallback defaults.
  */
 
 import React from 'react';
@@ -22,22 +25,22 @@ const RestaurantCard = ({ name, cuisine, rating, isOpen, _id, onSelect }) => {
   const numericRating = typeof rating === 'number' ? rating.toFixed(1) : '4.0';
 
   return (
-    <div className="group relative flex flex-col justify-between bg-white border border-slate-200/90 rounded-2xl p-5 shadow-sm hover:shadow-xl hover:border-slate-300 transition-all duration-300 transform hover:-translate-y-1">
+    <div className="group relative flex flex-col justify-between bg-white border border-[#f4f4f2] hover:border-[#e8e8e8] rounded-[16px] p-5 shadow-xs hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
       <div>
         {/* Top Header: Restaurant Name & Operational Status Badge */}
-        <div className="flex items-start justify-between gap-3 mb-2.5">
-          <h3 className="text-lg font-bold text-slate-900 group-hover:text-rose-600 transition-colors line-clamp-1">
+        <div className="flex items-start justify-between gap-3 mb-2">
+          <h3 className="text-[17px] font-bold text-[#2d2d2d] group-hover:text-[#cb202d] transition-colors line-clamp-1">
             {name || 'Unnamed Restaurant'}
           </h3>
 
           {/* Dynamic Open / Closed Status Badge (Task 1 Requirement) */}
           {isOpen ? (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#edf7ed] text-[#24963f] border border-[#c8e6c9] whitespace-nowrap">
               <CheckCircle2 className="w-3.5 h-3.5" />
               <span>Open Now</span>
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap">
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#fef2f2] text-[#cb202d] border border-[#fecaca] whitespace-nowrap">
               <XCircle className="w-3.5 h-3.5" />
               <span>Closed</span>
             </span>
@@ -45,41 +48,41 @@ const RestaurantCard = ({ name, cuisine, rating, isOpen, _id, onSelect }) => {
         </div>
 
         {/* Cuisine Specialty */}
-        <div className="flex items-center gap-2 text-slate-500 text-sm mb-3 font-medium">
-          <Utensils className="w-4 h-4 text-rose-500 shrink-0" />
+        <div className="flex items-center gap-2 text-[#828282] text-[13px] mb-3 font-medium">
+          <Utensils className="w-3.5 h-3.5 text-[#cb202d] shrink-0" />
           <span className="line-clamp-1">{cuisine || 'Multi-Cuisine'}</span>
         </div>
 
-        {/* Delivery & Campus Location Tags */}
-        <div className="flex items-center gap-3 text-xs text-slate-400 mb-4">
+        {/* Delivery & Campus Metadata */}
+        <div className="flex items-center gap-2.5 text-[12px] text-[#828282] mb-4">
           <div className="flex items-center gap-1">
-            <Clock className="w-3.5 h-3.5 text-slate-400" />
+            <Clock className="w-3.5 h-3.5" />
             <span>20–30 mins</span>
           </div>
           <span>•</span>
           <div className="flex items-center gap-1">
-            <MapPin className="w-3.5 h-3.5 text-slate-400" />
-            <span>Changa Campus</span>
+            <MapPin className="w-3.5 h-3.5" />
+            <span>CHARUSAT Campus</span>
           </div>
         </div>
       </div>
 
-      {/* Card Footer: Rating and Order Action */}
-      <div className="pt-3.5 border-t border-slate-100 flex items-center justify-between">
-        {/* Rating Display */}
-        <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-bold text-xs shadow-xs">
+      {/* Card Footer: The Zomato Rating Chip and Order Action */}
+      <div className="pt-3 border-t border-[#f4f4f2] flex items-center justify-between">
+        {/* The Rating Chip: Official Zomato Green Box #24963f */}
+        <div className="flex items-center gap-1 px-2 py-0.5 rounded-[6px] bg-[#24963f] text-white font-bold text-[12px] shadow-xs">
           <span>{numericRating}</span>
           <Star className="w-3 h-3 fill-white text-white" />
         </div>
 
-        {/* Order Action Button */}
+        {/* Action Button */}
         {_id ? (
           <Link
             to={`/order?restaurantId=${_id}&restaurantName=${encodeURIComponent(name)}`}
-            className={`inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-xl transition-all ${
+            className={`inline-flex items-center gap-1.5 text-[12px] font-bold px-3.5 py-1.5 rounded-[8px] transition-all ${
               isOpen
-                ? 'bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white border border-rose-200'
-                : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
+                ? 'bg-[#fef2f2] text-[#cb202d] hover:bg-[#cb202d] hover:text-white border border-[#fecaca]'
+                : 'bg-[#f4f4f2] text-[#828282] cursor-not-allowed border border-[#e8e8e8]'
             }`}
             onClick={(e) => {
               if (!isOpen) e.preventDefault();
@@ -90,7 +93,7 @@ const RestaurantCard = ({ name, cuisine, rating, isOpen, _id, onSelect }) => {
             {isOpen && <ArrowRight className="w-3.5 h-3.5" />}
           </Link>
         ) : (
-          <span className="text-xs font-semibold text-slate-400">QuickBite Partner</span>
+          <span className="text-[12px] font-semibold text-[#828282]">QuickBite Partner</span>
         )}
       </div>
     </div>
