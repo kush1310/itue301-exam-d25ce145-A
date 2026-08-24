@@ -2,7 +2,7 @@
  * LoginPage Component (Zomato Design System & Multi-Role RBAC)
  *
  * Implements strict Role-Based Access Control (RBAC) login tabs:
- * 1. Customer Login (Role = 'Customer')
+ * 1. Customer Login (Role = 'Customer', with quick presets for kush@charusat.edu.in and shah@charusat.edu.in)
  * 2. Restaurant Owner Portal (Role = 'Restaurant Owner', with quick credentials for all 6 canteens)
  * 3. Admin Oversight (Role = 'Admin')
  *
@@ -12,7 +12,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogIn, Lock, Mail, AlertCircle, ShieldAlert, User, Store, ChevronDown } from 'lucide-react';
+import { LogIn, Lock, Mail, AlertCircle, ShieldAlert, User, Store, Check } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 const LoginPage = () => {
@@ -27,7 +27,13 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
 
-  // Canteen Owner Demo Presets
+  // Customer Presets
+  const customerPresets = [
+    { name: 'Kush Shah', email: 'kush@charusat.edu.in', pass: 'password123', tag: 'Order History: Pizza & Biryani' },
+    { name: 'Shah Kush', email: 'shah@charusat.edu.in', pass: 'password123', tag: 'Order History: Coffee & Dimsums' }
+  ];
+
+  // Canteen Owner Presets
   const canteenOwners = [
     { name: 'The Rustic Oven Bistro', email: 'owner.bistro@quickbite.com', pass: 'bistro123' },
     { name: 'Spice Symphony Tandoor', email: 'owner.spice@quickbite.com', pass: 'spice123' },
@@ -50,6 +56,12 @@ const LoginPage = () => {
       setEmail('admin@quickbite.com');
       setPassword('adminpassword123');
     }
+  };
+
+  const handleSelectCustomer = (cust) => {
+    setEmail(cust.email);
+    setPassword(cust.pass);
+    setErrorMessage(null);
   };
 
   const handleSelectCanteenOwner = (owner) => {
@@ -147,6 +159,33 @@ const LoginPage = () => {
           </button>
         </div>
 
+        {/* Customer Accounts Quick Select (shown on Customer tab) */}
+        {activeTab === 'Customer' && (
+          <div className="p-3.5 rounded-[12px] bg-[#f4f4f2] border border-[#e8e8e8] space-y-2">
+            <span className="text-[11px] font-bold text-[#828282] uppercase tracking-wider block">
+              Select Customer Account:
+            </span>
+            <div className="grid grid-cols-2 gap-2">
+              {customerPresets.map((cust, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => handleSelectCustomer(cust)}
+                  className={`text-left p-2.5 rounded-[10px] text-[11px] font-bold border transition-all ${
+                    email === cust.email
+                      ? 'bg-white text-[#cb202d] border-[#cb202d] shadow-xs ring-1 ring-[#cb202d]'
+                      : 'bg-white text-[#2d2d2d] border-[#e8e8e8] hover:border-[#cb202d]/40'
+                  }`}
+                >
+                  <span className="font-extrabold block text-[#2d2d2d]">{cust.name}</span>
+                  <span className="text-[10px] text-[#cb202d] font-mono block">{cust.email}</span>
+                  <span className="text-[9px] text-[#828282] block mt-0.5">{cust.tag}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Canteen Owner Quick-Select Preset Chips (shown when Restaurant Owner tab is active) */}
         {activeTab === 'Restaurant Owner' && (
           <div className="p-3.5 rounded-[12px] bg-[#f4f4f2] border border-[#e8e8e8] space-y-2">
@@ -197,7 +236,7 @@ const LoginPage = () => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@quickbite.com"
+                placeholder="name@charusat.edu.in"
                 className="w-full pl-10 pr-4 py-2.5 bg-[#f4f4f2] border border-[#e8e8e8] rounded-[12px] text-[#2d2d2d] text-[14px] font-semibold focus:outline-none focus:ring-2 focus:ring-[#cb202d]/20 focus:border-[#cb202d] shadow-xs"
               />
             </div>
@@ -234,14 +273,14 @@ const LoginPage = () => {
             ) : (
               <>
                 <LogIn className="w-4 h-4" />
-                <span>Log In to {activeTab} Portal</span>
+                <span>Log In as {activeTab}</span>
               </>
             )}
           </button>
         </form>
 
         <div className="p-3 rounded-[12px] bg-[#f4f4f2] text-[11px] text-[#828282] text-center font-medium">
-          Protected by Role-Based JWT tokens. Cross-role login is strictly blocked by authGuard.
+          Protected by Role-Based JWT tokens. Cross-role login is strictly blocked.
         </div>
       </div>
     </div>
