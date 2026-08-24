@@ -2,11 +2,23 @@
  * AuthContext Module
  *
  * Provides application-wide authentication state with Role-Based Access Control (RBAC).
- * Supports role verification to strictly prevent cross-role authentication.
+ * Configures an Axios Request Interceptor to synchronously attach Bearer JWT tokens.
  */
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
+
+// Global Axios Request Interceptor: Synchronously attaches JWT token to every outgoing request
+axios.interceptors.request.use(
+  (config) => {
+    const savedToken = localStorage.getItem('quickbite_token');
+    if (savedToken) {
+      config.headers.Authorization = `Bearer ${savedToken}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 const AuthContext = createContext(null);
 
@@ -23,16 +35,14 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Synchronize axios authorization headers whenever token updates
+  // Synchronize localStorage when token/customer changes
   useEffect(() => {
     if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       localStorage.setItem('quickbite_token', token);
       if (customer) {
         localStorage.setItem('quickbite_customer', JSON.stringify(customer));
       }
     } else {
-      delete axios.defaults.headers.common['Authorization'];
       localStorage.removeItem('quickbite_token');
       localStorage.removeItem('quickbite_customer');
     }
@@ -41,11 +51,11 @@ export const AuthProvider = ({ children }) => {
   /**
    * login
    *
-   * Authenticates customer against the backend API endpoint with optional role enforcement.
+   * Authenticates customer or canteen owner against the backend API endpoint.
    *
    * @param  {string} email        - Registered email address
    * @param  {string} password     - Plaintext password
-   * @param  {string} [requiredRole] - Required role verification ('Customer' | 'Admin')
+   * @param  {string} [requiredRole] - Required role verification ('Customer' | 'Restaurant Owner' | 'Admin')
    * @returns {Promise<{success: boolean, message?: string}>}
    */
   const login = async (email, password, requiredRole) => {
@@ -60,6 +70,8 @@ export const AuthProvider = ({ children }) => {
 
       if (response.data && response.data.success) {
         const { token: receivedToken, customer: receivedCustomer } = response.data.data;
+        localStorage.setItem('quickbite_token', receivedToken);
+        localStorage.setItem('quickbite_customer', JSON.stringify(receivedCustomer));
         setToken(receivedToken);
         setCustomer(receivedCustomer);
         setLoading(false);
@@ -88,14 +100,13 @@ export const AuthProvider = ({ children }) => {
     setError(null);
     localStorage.removeItem('quickbite_token');
     localStorage.removeItem('quickbite_customer');
-    delete axios.defaults.headers.common['Authorization'];
   };
 
   const value = {
     customer,
     token,
     role: customer?.role || null,
-    isAdmin: customer?.role === 'Admin' || customer?.role === 'Restaurant Owner',
+    isAdmin: customer?.role === 'Admin',
     isAuthenticated: Boolean(token && customer),
     loading,
     error,

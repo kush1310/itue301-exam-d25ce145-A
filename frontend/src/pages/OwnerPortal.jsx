@@ -9,6 +9,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -24,11 +25,12 @@ import {
   Utensils,
   DollarSign,
   PackageCheck,
-  Tag
+  LogIn
 } from 'lucide-react';
 
 const OwnerPortal = () => {
-  const { customer } = useAuth();
+  const { customer, token, logout } = useAuth();
+  const navigate = useNavigate();
 
   const [restaurant, setRestaurant] = useState(null);
   const [orders, setOrders] = useState([]);
@@ -65,17 +67,17 @@ const OwnerPortal = () => {
       setLoading(false);
     } catch (err) {
       console.error('[OWNER_PORTAL_FETCH_ERROR]', err);
-      setError(
+      const errorMsg =
         err.response?.data?.error?.message ||
-          'Failed to load restaurant portal. Make sure you are logged in as a Restaurant Owner.'
-      );
+        'Failed to load restaurant portal. Make sure you are logged in as a Restaurant Owner.';
+      setError(errorMsg);
       setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchPortalData();
-  }, []);
+  }, [token]);
 
   /**
    * handleToggleStatus
@@ -237,8 +239,30 @@ const OwnerPortal = () => {
       {loading ? (
         <LoadingSpinner message="Loading your canteen dashboard..." />
       ) : error ? (
-        <div className="p-6 rounded-[16px] bg-[#fef2f2] border border-[#fecaca] text-[#cb202d] text-[14px] font-medium shadow-xs">
-          {error}
+        <div className="p-6 rounded-[16px] bg-[#fef2f2] border border-[#fecaca] text-[#cb202d] text-[14px] font-medium shadow-xs space-y-4">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-6 h-6 text-[#cb202d] shrink-0" />
+            <div>
+              <p className="font-bold text-[15px]">Authentication or Session Notice</p>
+              <p className="text-[13px] text-[#cb202d]/90">{error}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 pt-2">
+            <button
+              onClick={fetchPortalData}
+              className="px-4 py-2 rounded-[8px] bg-[#cb202d] text-white text-[12px] font-bold shadow-xs hover:bg-[#a81723] transition-colors"
+            >
+              Retry Loading
+            </button>
+            <Link
+              to="/login"
+              onClick={() => logout()}
+              className="px-4 py-2 rounded-[8px] bg-white border border-[#cb202d] text-[#cb202d] text-[12px] font-bold shadow-xs hover:bg-[#fef2f2] transition-colors flex items-center gap-1.5"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Log in again with Owner Credentials</span>
+            </Link>
+          </div>
         </div>
       ) : restaurant ? (
         <div className="space-y-8">
