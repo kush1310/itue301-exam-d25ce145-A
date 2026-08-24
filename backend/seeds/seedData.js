@@ -3,7 +3,8 @@
  *
  * Populates MongoDB with standard initial data:
  * - Customers (Customer, Admin)
- * - Restaurants (Italian, Indian, Asian, Mexican, Cafe) with menu items
+ * - 6 Campus Restaurants with Menu Items
+ * - 6 Dedicated Restaurant Owner Accounts (linked to each canteen)
  * - Sample orders to verify Mongoose references and population
  */
 
@@ -32,37 +33,7 @@ const seedDatabase = async () => {
     await Customer.deleteMany({});
     console.log('[SEED] Cleared existing Customers, Restaurants, and Orders.');
 
-    // 1. Create Seed Customers
-    const customer1 = await Customer.create({
-      name: 'Kush Shah',
-      email: 'kush@charusat.edu.in',
-      password: 'password123',
-      phone: '+91 98765 43210',
-      address: 'Hostel Block A, Room 302, CHARUSAT Campus, Changa',
-      role: 'Customer'
-    });
-
-    const adminUser = await Customer.create({
-      name: 'Admin User',
-      email: 'admin@quickbite.com',
-      password: 'adminpassword123',
-      phone: '+91 98765 00000',
-      address: 'CSPIT IT Dept, Changa',
-      role: 'Admin'
-    });
-
-    const customer2 = await Customer.create({
-      name: 'Priya Patel',
-      email: 'priya@charusat.edu.in',
-      password: 'password123',
-      phone: '+91 98765 11111',
-      address: 'Faculty Quarters B-12, CHARUSAT Campus, Changa',
-      role: 'Customer'
-    });
-
-    console.log(`[SEED] Created ${3} customers.`);
-
-    // 2. Create Seed Restaurants
+    // 1. Create Restaurants
     const restaurantsData = [
       {
         name: 'The Rustic Oven Bistro',
@@ -110,7 +81,7 @@ const seedDatabase = async () => {
         name: 'Taco Fiesta Grill',
         cuisine: 'Mexican & Burrito Bowls',
         rating: 4.2,
-        isOpen: false, // Closed restaurant to demonstrate isOpen = false rendering
+        isOpen: false, // Closed restaurant for testing
         address: 'Near East Sports Complex, Changa',
         deliveryTimeMinutes: 35,
         menu: [
@@ -138,7 +109,7 @@ const seedDatabase = async () => {
         name: 'The Midnight Kitchen',
         cuisine: 'Late Night Fast Food & Burgers',
         rating: 3.9,
-        isOpen: false, // Another closed restaurant for testing
+        isOpen: false, // Closed for testing
         address: 'Changa Cross Roads',
         deliveryTimeMinutes: 40,
         menu: [
@@ -152,8 +123,90 @@ const seedDatabase = async () => {
     const createdRestaurants = await Restaurant.insertMany(restaurantsData);
     console.log(`[SEED] Created ${createdRestaurants.length} restaurants.`);
 
-    // 3. Create Sample Orders
-    const sampleOrder1 = await Order.create({
+    // 2. Create Customers
+    const customer1 = await Customer.create({
+      name: 'Kush Shah',
+      email: 'kush@charusat.edu.in',
+      password: 'password123',
+      phone: '+91 98765 43210',
+      address: 'Hostel Block A, Room 302, CHARUSAT Campus, Changa',
+      role: 'Customer'
+    });
+
+    const adminUser = await Customer.create({
+      name: 'Admin User',
+      email: 'admin@quickbite.com',
+      password: 'adminpassword123',
+      phone: '+91 98765 00000',
+      address: 'CSPIT IT Dept, Changa',
+      role: 'Admin'
+    });
+
+    // 3. Create Dedicated Restaurant Owners for each Canteen
+    const ownerAccounts = [
+      {
+        name: 'Marco Rossi (Owner)',
+        email: 'owner.bistro@quickbite.com',
+        password: 'bistro123',
+        phone: '+91 98765 20001',
+        address: 'The Rustic Oven Bistro, Central Library',
+        role: 'Restaurant Owner',
+        restaurantId: createdRestaurants[0]._id
+      },
+      {
+        name: 'Harpreet Singh (Owner)',
+        email: 'owner.spice@quickbite.com',
+        password: 'spice123',
+        phone: '+91 98765 20002',
+        address: 'Spice Symphony, Activity Center',
+        role: 'Restaurant Owner',
+        restaurantId: createdRestaurants[1]._id
+      },
+      {
+        name: 'Mei Ling (Owner)',
+        email: 'owner.zen@quickbite.com',
+        password: 'zen123',
+        phone: '+91 98765 20003',
+        address: 'Zen Dragon, Food Court Block 3',
+        role: 'Restaurant Owner',
+        restaurantId: createdRestaurants[2]._id
+      },
+      {
+        name: 'Carlos Mendez (Owner)',
+        email: 'owner.taco@quickbite.com',
+        password: 'taco123',
+        phone: '+91 98765 20004',
+        address: 'Taco Fiesta, Sports Complex',
+        role: 'Restaurant Owner',
+        restaurantId: createdRestaurants[3]._id
+      },
+      {
+        name: 'Aarav Mehta (Owner)',
+        email: 'owner.brew@quickbite.com',
+        password: 'brew123',
+        phone: '+91 98765 20005',
+        address: 'Campus Brew, CSPIT Ground Floor',
+        role: 'Restaurant Owner',
+        restaurantId: createdRestaurants[4]._id
+      },
+      {
+        name: 'Rohan Sharma (Owner)',
+        email: 'owner.midnight@quickbite.com',
+        password: 'midnight123',
+        phone: '+91 98765 20006',
+        address: 'The Midnight Kitchen, Cross Roads',
+        role: 'Restaurant Owner',
+        restaurantId: createdRestaurants[5]._id
+      }
+    ];
+
+    for (const owner of ownerAccounts) {
+      await Customer.create(owner);
+    }
+    console.log(`[SEED] Created ${ownerAccounts.length} dedicated restaurant owner accounts.`);
+
+    // 4. Create Sample Orders
+    await Order.create({
       customerId: customer1._id,
       restaurantId: createdRestaurants[0]._id,
       items: [
@@ -165,7 +218,7 @@ const seedDatabase = async () => {
       status: 'delivered'
     });
 
-    const sampleOrder2 = await Order.create({
+    await Order.create({
       customerId: customer1._id,
       restaurantId: createdRestaurants[1]._id,
       items: [
@@ -177,14 +230,11 @@ const seedDatabase = async () => {
       status: 'preparing'
     });
 
-    console.log(`[SEED] Created ${2} sample orders.`);
-    console.log('[SEED] Database initialization completed successfully.');
-
+    console.log('[SEED] Database seeding complete.');
     await mongoose.connection.close();
-    console.log('[SEED] Database connection closed.');
     process.exit(0);
   } catch (error) {
-    console.error(`[SEED_ERROR] Error seeding database: ${error.message}`);
+    console.error(`[SEED_ERROR] ${error.message}`);
     process.exit(1);
   }
 };

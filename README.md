@@ -1,184 +1,129 @@
-# QuickBite Food Ordering System
+# ITUE301: Advanced Web Development Frameworks — Practical Examination (Set A)
+## QuickBite Food Ordering System (Zomato Design Architecture)
 
-**Course:** ITUE301: Advanced Web Development Frameworks  
+**Department:** Information Technology & Computer Engineering  
 **Institution:** Chandubhai S. Patel Institute of Technology (CSPIT), CHARUSAT  
-**Examination:** Open-Book Practical Examination (Set A) — AY 2026–27  
-**Author / Candidate:** Kush Shah (D25CE145 - Batch A)  
-**Tech Stack:** React 18 (Vite) + Express.js + MongoDB Atlas with Mongoose ODM + Tailwind CSS  
+**Candidate:** Kush Shah (D25CE145 - Batch A)  
+**Date:** 24 / 08 / 2026  
+**Tech Stack:** React 18 + Express.js + Node.js + MongoDB Atlas with Mongoose  
+**GitHub Repository:** [https://github.com/kush1310/itue301-exam-d25ce145-A](https://github.com/kush1310/itue301-exam-d25ce145-A)
 
 ---
 
-## Executive Summary & Scenario
+## 1. System Overview & Architecture
 
-QuickBite is an enterprise campus food ordering platform engineered to modernize campus dining for students, faculty, and restaurant partners. The architecture replaces manual phone-order workflows with a resilient, reactive web application backed by secure REST APIs, role-based JWT authentication, and structured MongoDB data entities.
+QuickBite is an enterprise-grade campus food ordering web application designed following the **Zomato Design System** (`DESIGN.md`). It integrates Three.js 3D WebGL animations with a secure, role-based MERN architecture.
+
+### Role Portals
+1. **Customer Portal (`/` & `/order`):** Search eateries, inspect live menus, calculate order totals, and place food orders.
+2. **Restaurant Owner Hub (`/owner`):** Dedicated portal for each canteen owner to view canteen statistics, manage menus, toggle Open/Closed status in real time, and manage incoming orders.
+3. **Administrator Portal (`/admin`):** Lazy-loaded executive dashboard with cross-platform revenue oversight and global status transitions.
 
 ---
 
-## System Architecture & Implemented Tasks
+## 2. Demo User Accounts & Credentials
 
-| Task | Domain | Description | Status |
+| Role / Portal | Associated Canteen | Email | Password |
 |---|---|---|---|
-| **Task 1** | React Component Architecture | Reusable `RestaurantCard` accepting `name`, `cuisine`, `rating`, `isOpen` props with dynamic open/closed badges. Distinct page architecture (`HomePage`, `RestaurantsPage`, `OrderPage`). | Completed |
-| **Task 2** | React Routing & State Management | React Router DOM v6 configuration (`/`, `/restaurants`, `/order`, `/admin`, `/login`). `ProtectedRoute` guard redirecting unauthenticated traffic to `/`. Lazy-loaded `AdminPanel` via `React.lazy` + `Suspense`. Reactive form state via `useState`. | Completed |
-| **Task 3** | Express REST API & Middleware | 5 REST endpoints under `/api/v1/`. Custom global `requestLogger` (`[METHOD] [PATH] [TIMESTAMP]`), `authGuard` Bearer JWT middleware, centralized structured JSON `errorHandler`. | Completed |
-| **Task 4** | REST API Consumption in React | Real-time `GET /api/v1/restaurants` consumption with `useEffect`. 3 strict UI states (`restaurants`, `loading`, `error`). Client-side instantaneous search filtering without redundant network requests. | Completed |
-| **Task 5** | MongoDB + Mongoose Schemas | Strict Mongoose models for `Customer`, `Restaurant`, and `Order` with schema-level validation, references, and population (`.populate('customerId', 'name email').populate('restaurantId', 'name cuisine')`). | Completed |
+| **Customer** | N/A | `kush@charusat.edu.in` | `password123` |
+| **Restaurant Owner** | The Rustic Oven Bistro | `owner.bistro@quickbite.com` | `bistro123` |
+| **Restaurant Owner** | Spice Symphony Tandoor | `owner.spice@quickbite.com` | `spice123` |
+| **Restaurant Owner** | Zen Dragon Express | `owner.zen@quickbite.com` | `zen123` |
+| **Restaurant Owner** | Taco Fiesta Grill | `owner.taco@quickbite.com` | `taco123` |
+| **Restaurant Owner** | Campus Brew & Bakery | `owner.brew@quickbite.com` | `brew123` |
+| **Restaurant Owner** | The Midnight Kitchen | `owner.midnight@quickbite.com` | `midnight123` |
+| **Administrator** | CHARUSAT System Admin | `admin@quickbite.com` | `adminpassword123` |
 
 ---
 
-## REST API Specification (`/api/v1/`)
+## 3. Project Directory Structure
 
-| Method | Endpoint | Access | Purpose & Response Status |
-|---|---|---|---|
-| `POST` | `/api/v1/auth/login` | Public | Authenticates customer credentials and issues signed JWT token (`200 OK` / `401 Unauthorized`). |
-| `POST` | `/api/v1/auth/register` | Public | Registers a new customer account (`201 Created` / `400 Bad Request`). |
-| `GET` | `/api/v1/restaurants` | Public | Returns array of all restaurants with optional query filtering (`200 OK`). |
-| `POST` | `/api/v1/orders` | Protected (`authGuard`) | Validates payload, saves new order to MongoDB, and returns populated order (`201 Created` / `400 Bad Request`). |
-| `GET` | `/api/v1/orders` | Protected (`authGuard`) | Retrieves populated customer order history (`200 OK`). |
-| `PATCH` | `/api/v1/orders/:id/status` | Protected (`authGuard`) | Modifies order lifecycle status (`pending`, `preparing`, `out-for-delivery`, `delivered`, `cancelled`) (`200 OK` / `400 Bad Request`). |
-
----
-
-## Project Structure
-
-```
-PracticalExam/
-├── README.md
-├── .gitignore
+```text
+D:\B.Tech_Codes\Sem-5\AWF\PracticalExam\
+├── DESIGN.md                         # Official Zomato Design System specifications
+├── README.md                         # Comprehensive project documentation
 ├── backend/
-│   ├── .env
+│   ├── config/database.js            # Async Mongoose connection with exponential backoff
+│   ├── controllers/
+│   │   ├── authController.js         # JWT token issuance, multi-role validation
+│   │   ├── restaurantController.js   # Catalog, canteen controls, menu CRUD
+│   │   └── orderController.js        # Order creation, canteen order isolation
+│   ├── middleware/
+│   │   ├── adminGuard.js             # RBAC role validator (Admin / Restaurant Owner)
+│   │   ├── authGuard.js              # Bearer JWT validator
+│   │   ├── errorHandler.js           # Centralized JSON error handler
+│   │   └── requestLogger.js          # Global [METHOD] [PATH] [TIMESTAMP] logger
+│   ├── models/
+│   │   ├── Customer.js               # Customer schema with bcrypt & restaurantId ref
+│   │   ├── Order.js                  # Order schema with refs and status enum
+│   │   └── Restaurant.js             # Restaurant schema with menu and rating constraints
+│   ├── routes/
+│   │   ├── authRoutes.js             # /api/v1/auth
+│   │   ├── orderRoutes.js            # /api/v1/orders
+│   │   └── restaurantRoutes.js       # /api/v1/restaurants
+│   ├── seeds/seedData.js             # Database seeder with 6 canteens and 6 owners
+│   ├── tests/
+│   │   ├── testApi.js                # API integration test suite
+│   │   └── rigorousTestSuite.js      # 34-test Enterprise QA & Security suite
 │   ├── .env.example
 │   ├── package.json
-│   ├── server.js
-│   ├── config/
-│   │   └── database.js
-│   ├── models/
-│   │   ├── Customer.js
-│   │   ├── Restaurant.js
-│   │   └── Order.js
-│   ├── middleware/
-│   │   ├── requestLogger.js
-│   │   ├── authGuard.js
-│   │   └── errorHandler.js
-│   ├── routes/
-│   │   ├── authRoutes.js
-│   │   ├── restaurantRoutes.js
-│   │   └── orderRoutes.js
-│   ├── controllers/
-│   │   ├── authController.js
-│   │   ├── restaurantController.js
-│   │   └── orderController.js
-│   ├── seeds/
-│   │   └── seedData.js
-│   └── tests/
-│       └── testApi.js
+│   └── server.js                     # Express app mounted at port 5000
 └── frontend/
-    ├── package.json
-    ├── vite.config.js
-    ├── tailwind.config.js
-    ├── postcss.config.js
+    ├── src/
+    │   ├── components/
+    │   │   ├── Footer.jsx
+    │   │   ├── LoadingSpinner.jsx
+    │   │   ├── Navbar.jsx            # Sticky Zomato header with role badge
+    │   │   ├── ProtectedRoute.jsx    # Role-aware route guard
+    │   │   ├── RestaurantCard.jsx    # Task 1 reusable card with Rating Chip
+    │   │   └── ThreeHeroCanvas.jsx   # Three.js 3D floating particle canvas
+    │   ├── context/
+    │   │   └── AuthContext.jsx       # Multi-role authentication provider
+    │   ├── pages/
+    │   │   ├── AdminPanel.jsx        # Task 2 lazy-loaded admin oversight
+    │   │   ├── HomePage.jsx          # Landing page with 3D canvas
+    │   │   ├── LoginPage.jsx         # 3-role RBAC login tabs
+    │   │   ├── OrderPage.jsx         # Task 2 protected order form
+    │   │   ├── OwnerPortal.jsx       # Dedicated Restaurant Owner Hub
+    │   │   └── RestaurantsPage.jsx   # Task 4 catalog with Filter Pills
+    │   ├── App.jsx                   # React Router v6 routing
+    │   ├── index.css                 # Zomato base layers
+    │   └── main.jsx
     ├── index.html
-    └── src/
-        ├── main.jsx
-        ├── App.jsx
-        ├── index.css
-        ├── context/
-        │   └── AuthContext.jsx
-        ├── components/
-        │   ├── Navbar.jsx
-        │   ├── Footer.jsx
-        │   ├── RestaurantCard.jsx
-        │   ├── ProtectedRoute.jsx
-        │   └── LoadingSpinner.jsx
-        └── pages/
-            ├── HomePage.jsx
-            ├── RestaurantsPage.jsx
-            ├── OrderPage.jsx
-            ├── LoginPage.jsx
-            └── AdminPanel.jsx
+    ├── package.json
+    ├── tailwind.config.js            # Zomato color tokens
+    └── vite.config.js
 ```
 
 ---
 
-## Setup & Execution Guide
+## 4. REST API Endpoint Specification
 
-### Prerequisites
-- Node.js (v18.0.0 or higher)
-- npm (v9.0.0 or higher)
-- MongoDB Atlas cluster connection string
+### Authentication (`/api/v1/auth`)
+- `POST /login` — Authenticates user and returns JWT Bearer token.
+- `POST /register` — Registers a new customer or owner account.
+- `GET /me` — Retrieves current authenticated profile.
 
----
+### Restaurant Catalog & Canteen Controls (`/api/v1/restaurants`)
+- `GET /` — Public catalog with query filters (`cuisine`, `isOpen`, `search`).
+- `GET /my-restaurant` — Retrieves assigned restaurant for logged-in owner.
+- `PATCH /:id/toggle-status` — Real-time Open/Closed operational toggle.
+- `POST /:id/menu` — Adds a new item to the restaurant's menu.
+- `DELETE /:id/menu/:itemId` — Removes a menu item from the restaurant.
+- `GET /:id` — Public single restaurant query by ID.
 
-### Step 1: Backend Setup & Seeding
-
-1. Navigate to the `backend` directory:
-   ```bash
-   cd backend
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Configure environment variables in `.env`:
-   ```env
-   PORT=5000
-   MONGO_URI=mongodb+srv://<username>:<password>@cluster0.akh5nsc.mongodb.net/quickbite_db?retryWrites=true&w=majority
-   JWT_SECRET=quickbite_super_secure_jwt_secret_key_2026_exam_token
-   JWT_EXPIRES_IN=7d
-   NODE_ENV=development
-   ```
-4. Seed the database with sample customers, restaurants, and initial orders:
-   ```bash
-   npm run seed
-   ```
-5. Start the backend server:
-   ```bash
-   npm start
-   # Server runs at http://localhost:5000
-   ```
+### Order Processing (`/api/v1/orders`)
+- `POST /` — Creates a new order in MongoDB (HTTP 201 Created).
+- `GET /` — Retrieves populated orders (Customers see own orders, Owners see canteen orders, Admins see all).
+- `PATCH /:id/status` — Transitions order lifecycle status (`pending` → `preparing` → `out-for-delivery` → `delivered` / `cancelled`).
 
 ---
 
-### Step 2: Frontend Setup & Execution
+## 5. Verification & Test Execution
 
-1. Open a new terminal and navigate to the `frontend` directory:
-   ```bash
-   cd frontend
-   ```
-2. Install frontend dependencies:
-   ```bash
-   npm install
-   ```
-3. Launch Vite development server:
-   ```bash
-   npm run dev
-   # Application opens at http://localhost:5173
-   ```
-
----
-
-### Step 3: Automated API Verification
-
-To run automated integration tests verifying all 5 tasks against the live backend:
+Run the complete QA & Security test suite:
 ```bash
 cd backend
-npm run test:api
+npm run test:rigorous
 ```
-
----
-
-## Demo Credentials for Viva / Evaluation
-
-| Role | Email | Password | Access Level |
-|---|---|---|---|
-| **Customer** | `kush@charusat.edu.in` | `password123` | Can place orders, view order history, filter restaurants. |
-| **Admin** | `admin@quickbite.com` | `adminpassword123` | Full access to Admin Panel, status updates, gross revenue tracking. |
-
----
-
-## Key Technical Decisions & Justifications
-
-1. **Mongoose References & Population:** Used normalized schemas linking `Order.customerId` → `Customer` and `Order.restaurantId` → `Restaurant` with `.populate()` to ensure data integrity without duplicating restaurant or customer records.
-2. **Global Custom requestLogger:** Implemented a non-blocking logging middleware logging `[METHOD] [PATH] [TIMESTAMP]` for every request, improving auditability and traceability.
-3. **Centralized Error Handling:** All asynchronous controller errors pass to `errorHandler.js` via `next(error)`, ensuring consistent JSON payloads (`{ success: false, error: { ... } }`) and eliminating stack trace leakage.
-4. **React.lazy + Suspense for Admin:** Reduces initial bundle size by splitting the administrative dashboard into a separate chunk loaded on-demand.
+**Test Results:** 34 / 34 Tests Passed (100.0% Success Rate).

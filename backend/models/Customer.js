@@ -3,9 +3,7 @@
  *
  * Defines the Mongoose schema and persistence logic for the Customer entity
  * in the QuickBite Food Ordering System.
- *
- * @validates - Name required, RFC-compliant email required and unique, phone string, address string.
- * @edge-cases - Case-insensitive email normalization, bcrypt salt generation failure handling.
+ * Supports roles: 'Customer', 'Restaurant Owner', 'Admin'
  */
 
 const mongoose = require('mongoose');
@@ -49,6 +47,11 @@ const customerSchema = new mongoose.Schema(
       type: String,
       enum: ['Customer', 'Restaurant Owner', 'Admin'],
       default: 'Customer'
+    },
+    restaurantId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Restaurant',
+      default: null
     }
   },
   {
@@ -72,10 +75,7 @@ customerSchema.pre('save', async function (next) {
 
 /**
  * matchPassword Method
- * Compares candidate plaintext password with the stored bcrypt hash.
- *
- * @param  {string} candidatePassword - Submitted plaintext password.
- * @returns {Promise<boolean>}         - True if passwords match, false otherwise.
+ * Compares candidate plaintext password with stored bcrypt hash.
  */
 customerSchema.methods.matchPassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);

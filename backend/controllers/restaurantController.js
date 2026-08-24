@@ -1,25 +1,16 @@
 /**
  * Restaurant Controller
  *
- * Manages restaurant retrieval, filtering, and creation operations
- * for the QuickBite Food Ordering System.
+ * Manages restaurant retrieval, filtering, creation, canteen controls,
+ * and menu management for Restaurant Owners and Admins.
  */
 
 const Restaurant = require('../models/Restaurant');
+const Customer = require('../models/Customer');
 
 /**
  * getAllRestaurants
- *
- * Retrieves all restaurant records from the database.
- * Supports optional query filtering by cuisine or open status.
- *
- * @param  {import('express').Request} req   - Express request object
- * @param  {import('express').Response} res  - Express response object
- * @param  {import('express').NextFunction} next - Error middleware callback
- * @returns {Promise<Response>}              - 200 OK with array of restaurants
- * @validates - N/A (Public query endpoint)
- * @redirects - N/A
- * @edge-cases - Empty collection returns empty array with 200 OK.
+ * Retrieves all restaurants (public).
  */
 const getAllRestaurants = async (req, res, next) => {
   try {
@@ -55,13 +46,6 @@ const getAllRestaurants = async (req, res, next) => {
 
 /**
  * getRestaurantById
- *
- * Retrieves a single restaurant by its MongoDB ObjectId.
- *
- * @param  {import('express').Request} req   - Express request with restaurant ID in req.params
- * @param  {import('express').Response} res  - Express response
- * @param  {import('express').NextFunction} next - Error callback
- * @returns {Promise<Response>}              - 200 OK with restaurant or 404 Not Found
  */
 const getRestaurantById = async (req, res, next) => {
   try {
@@ -88,14 +72,171 @@ const getRestaurantById = async (req, res, next) => {
 };
 
 /**
+ * getMyRestaurant
+ * Returns the restaurant entity managed by the authenticated Restaurant Owner.
+ */
+const getMyRestaurant = async (req, res, next) => {
+  try {
+    const user = await Customer.findById(req.user.id);
+    let restaurantId = user?.restaurantId || req.user.restaurantId;
+
+    if (!restaurantId && user.role === 'Admin') {
+      // If admin, default to first restaurant
+      const firstRest = await Restaurant.findOne();
+      restaurantId = firstRest?._id;
+    }
+
+    if (!restaurantId) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'NO_ASSIGNED_RESTAURANT',
+          status: 404,
+          message: 'No restaurant is assigned to this owner account.'
+        }
+      });
+    }
+
+    const restaurant = await Restaurant.findById(restaurantId);
+    if (!restaurant) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'RESTAURANT_NOT_FOUND',
+          status: 404,
+          message: 'Assigned restaurant not found.'
+        }
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: restaurant
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * toggleRestaurantStatus
+ * Toggles or sets isOpen boolean status in real time.
+ */
+const toggleRestaurantStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { isOpen } = req.body;
+
+    const restaurant = await Restaurant.findById(id);
+    if (!restaurant) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'RESTAURANT_NOT_FOUND',
+          status: 404,
+          message: `Restaurant with ID ${id} was not found.`
+        }
+      });
+    }
+
+    restaurant.isOpen = isOpen !== undefined ? Boolean(isOpen) : !restaurant.isOpen;
+    await restaurant.save();
+
+    return res.status(200).json({
+      success: true,
+      message: `Restaurant is now ${restaurant.isOpen ? 'Open' : 'Closed'}.`,
+      data: restaurant
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * addMenuItem
+ * Adds a new food item to the restaurant's menu.
+ */
+const addMenuItem = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { name, price, category } = req.body;
+
+    if (!name || price === undefined) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'MISSING_MENU_FIELDS',
+          status: 400,
+          message: 'Menu item name and price are required.'
+        }
+      });
+    }
+
+    const restaurant = await Restaurant.findById(id);
+    if (!restaurant) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'RESTAURANT_NOT_FOUND',
+          status: 404,
+          message: `Restaurant with ID ${id} was not found.`
+        }
+      });
+    }
+
+    restaurant.menu.push({
+      name: name.trim(),
+      price: Number(price),
+      category: category || 'Main'
+    });
+
+    await restaurant.save();
+
+    return res.status(201).json({
+      success: true,
+      message: 'Menu item added successfully.',
+      data: restaurant
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * removeMenuItem
+ * Removes a menu item from the restaurant.
+ */
+const removeMenuItem = async (req, res, next) => {
+  try {
+    const { id, itemId } = req.params;
+
+    const restaurant = await Restaurant.findById(id);
+    if (!restaurant) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'RESTAURANT_NOT_FOUND',
+          status: 404,
+          message: `Restaurant with ID ${id} was not found.`
+        }
+      });
+    }
+
+    restaurant.menu = restaurant.menu.filter((m) => String(m._id) !== itemId);
+    await restaurant.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Menu item removed successfully.',
+      data: restaurant
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * createRestaurant
- *
- * Creates a new restaurant record in the database.
- *
- * @param  {import('express').Request} req   - Request body with restaurant details
- * @param  {import('express').Response} res  - Response with 201 Created
- * @param  {import('express').NextFunction} next - Error callback
- * @returns {Promise<Response>}              - 201 Created on success
  */
 const createRestaurant = async (req, res, next) => {
   try {
@@ -124,5 +265,9 @@ const createRestaurant = async (req, res, next) => {
 module.exports = {
   getAllRestaurants,
   getRestaurantById,
+  getMyRestaurant,
+  toggleRestaurantStatus,
+  addMenuItem,
+  removeMenuItem,
   createRestaurant
 };

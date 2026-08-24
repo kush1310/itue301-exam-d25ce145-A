@@ -1,12 +1,13 @@
 /**
- * App Root Component (Task 2 Routing Architecture — Light Zomato Theme)
+ * App Root Component (Task 2 Routing Architecture — Zomato Theme)
  *
  * Configures client-side routing via React Router DOM v6:
  * - / -> HomePage (Public)
  * - /restaurants -> RestaurantsPage (Public)
  * - /order -> OrderPage (Protected via ProtectedRoute wrapper)
+ * - /owner -> OwnerPortal (Protected for Restaurant Owner role)
  * - /admin -> AdminPanel (Lazy-loaded via React.lazy + Suspense, RBAC Protected for Admin)
- * - /login -> LoginPage (Public with role segregation)
+ * - /login -> LoginPage (Public with 3 RBAC login modes)
  */
 
 import React, { Suspense, lazy } from 'react';
@@ -21,6 +22,7 @@ import LoadingSpinner from './components/LoadingSpinner';
 import HomePage from './pages/HomePage';
 import RestaurantsPage from './pages/RestaurantsPage';
 import OrderPage from './pages/OrderPage';
+import OwnerPortal from './pages/OwnerPortal';
 import LoginPage from './pages/LoginPage';
 
 // Task 2: Lazy-loaded route for Admin Panel using React.lazy
@@ -28,7 +30,7 @@ const LazyAdminPanel = lazy(() => import('./pages/AdminPanel'));
 
 function App() {
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50 text-slate-900 selection:bg-rose-500 selection:text-white">
+    <div className="flex flex-col min-h-screen bg-[#ffffff] text-[#2d2d2d] selection:bg-[#cb202d] selection:text-white font-sans">
       {/* Primary Sticky Header Navigation */}
       <Navbar />
 
@@ -47,6 +49,16 @@ function App() {
             element={
               <ProtectedRoute>
                 <OrderPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Protected Restaurant Owner Hub */}
+          <Route
+            path="/owner"
+            element={
+              <ProtectedRoute requiredRole="Restaurant Owner">
+                <OwnerPortal />
               </ProtectedRoute>
             }
           />

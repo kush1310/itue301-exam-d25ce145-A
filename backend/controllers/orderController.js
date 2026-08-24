@@ -1,8 +1,8 @@
 /**
  * Order Controller
  *
- * Handles order placement, customer order history retrieval with Mongoose population,
- * and order status lifecycle updates for the QuickBite Food Ordering System.
+ * Handles order placement, customer & canteen owner order history retrieval,
+ * Mongoose population, and order status lifecycle updates.
  */
 
 const Order = require('../models/Order');
@@ -11,18 +11,6 @@ const Customer = require('../models/Customer');
 
 /**
  * createOrder
- *
- * Creates a new order record for the authenticated customer.
- * Validates existence of restaurant and customer, validates items array,
- * calculates totalAmount, and persists to MongoDB.
- *
- * @param  {import('express').Request} req   - Express request with authenticated req.user and order body
- * @param  {import('express').Response} res  - Express response
- * @param  {import('express').NextFunction} next - Error callback
- * @returns {Promise<Response>}              - 201 Created with saved order document
- * @validates - customerId, restaurantId, items array non-empty, totalAmount >= 0, valid status enum.
- * @redirects - N/A
- * @edge-cases - Non-existent restaurant, empty items array, invalid status strings.
  */
 const createOrder = async (req, res, next) => {
   try {
@@ -75,7 +63,6 @@ const createOrder = async (req, res, next) => {
       });
     }
 
-    // Calculate total if not explicitly provided or enforce provided total
     let computedTotal = 0;
     for (const item of items) {
       if (!item.name || item.quantity === undefined || item.price === undefined) {
@@ -104,7 +91,7 @@ const createOrder = async (req, res, next) => {
 
     const savedOrder = await newOrder.save();
 
-    // Populate references before returning response
+    // Populate references
     const populatedOrder = await Order.findById(savedOrder._id)
       .populate('customerId', 'name email')
       .populate('restaurantId', 'name cuisine');
@@ -121,26 +108,28 @@ const createOrder = async (req, res, next) => {
 
 /**
  * getCustomerOrders
- *
- * Retrieves all orders for the authenticated customer (or all orders for Admin).
  * Populates customerId with name and email, and restaurantId with name and cuisine.
- *
- * @param  {import('express').Request} req   - Express request with authenticated req.user
- * @param  {import('express').Response} res  - Express response
- * @param  {import('express').NextFunction} next - Error callback
- * @returns {Promise<Response>}              - 200 OK with array of populated orders
+ * RBAC: Customer -> own orders, Restaurant Owner -> canteen orders, Admin -> all orders.
  */
 const getCustomerOrders = async (req, res, next) => {
   try {
     const filterQuery = {};
 
-    // If customer is not Admin, restrict orders to their own customerId
-    if (req.user && req.user.role !== 'Admin') {
-      filterQuery.customerId = req.user.id;
+    if (req.user) {
+      if (req.user.role === 'Customer') {
+        filterQuery.customerId = req.user.id;
+      } else if (req.user.role === 'Restaurant Owner') {
+        // Fetch owner's restaurant
+        const user = await Customer.findById(req.user.id);
+        if (user?.restaurantId) {
+          filterQuery.restaurantId = user.restaurantId;
+        }
+      }
+      // Admin sees all
     }
 
     const orders = await Order.find(filterQuery)
-      .populate('customerId', 'name email')
+      .populate('customerId', 'name email phone')
       .populate('restaurantId', 'name cuisine')
       .sort({ createdAt: -1 });
 
@@ -156,14 +145,6 @@ const getCustomerOrders = async (req, res, next) => {
 
 /**
  * updateOrderStatus
- *
- * Updates the status of an existing order.
- * Validates that the submitted status belongs to the defined enum list.
- *
- * @param  {import('express').Request} req   - Request with order ID in params and status in body
- * @param  {import('express').Response} res  - Response returning updated populated order
- * @param  {import('express').NextFunction} next - Error callback
- * @returns {Promise<Response>}              - 200 OK on success or 400/404 on error
  */
 const updateOrderStatus = async (req, res, next) => {
   try {

@@ -10,10 +10,10 @@
 import React from 'react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { UtensilsCrossed, ShieldAlert, ShoppingBag, Store, Home, LogIn, LogOut, User } from 'lucide-react';
+import { UtensilsCrossed, ShieldAlert, ShoppingBag, Store, Home, LogIn, LogOut, User, ChefHat } from 'lucide-react';
 
 const Navbar = () => {
-  const { customer, isAuthenticated, isAdmin, logout } = useAuth();
+  const { customer, isAuthenticated, isAdmin, role, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -27,6 +27,8 @@ const Navbar = () => {
         ? 'bg-[#fef2f2] text-[#cb202d] border border-[#fecaca]'
         : 'text-[#2d2d2d] hover:text-[#cb202d] hover:bg-[#f4f4f2]'
     }`;
+
+  const isOwner = role === 'Restaurant Owner';
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-[#f4f4f2] shadow-xs">
@@ -61,6 +63,16 @@ const Navbar = () => {
               <ShoppingBag className="w-4 h-4" />
               <span>Order Food</span>
             </NavLink>
+
+            {/* Restaurant Owner Portal Link */}
+            {isOwner && (
+              <NavLink to="/owner" className={navLinkStyle}>
+                <ChefHat className="w-4 h-4 text-[#cb202d]" />
+                <span>Owner Portal</span>
+              </NavLink>
+            )}
+
+            {/* Admin Portal Link */}
             {isAdmin && (
               <NavLink to="/admin" className={navLinkStyle}>
                 <ShieldAlert className="w-4 h-4" />
