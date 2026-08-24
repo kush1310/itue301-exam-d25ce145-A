@@ -1,0 +1,107 @@
+{
+  "info": {
+    "_postman_id": "a15c3ea7-bb86-4e5e-9a9c-quickbite-2026",
+    "name": "QuickBite Food Ordering System API (ITUE301 Set A)",
+    "description": "Comprehensive Postman & Burp Suite test collection for ITUE301 Practical Exam",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Customer Login (Get JWT Token)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"kush@charusat.edu.in\",\n  \"password\": \"password123\",\n  \"requiredRole\": \"Customer\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/v1/auth/login",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "v1", "auth", "login"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "2. Get All Restaurants (Public)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5000/api/v1/restaurants",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "v1", "restaurants"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "3. Create Order (POST /api/v1/orders -> 201 Created)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{JWT_TOKEN}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"restaurantId\": \"6a8bf850eff9f04f55049b66\",\n  \"items\": [\n    {\n      \"name\": \"Margherita Woodfired Pizza\",\n      \"quantity\": 1,\n      \"price\": 280\n    },\n    {\n      \"name\": \"Garlic Herb Bread with Cheese\",\n      \"quantity\": 1,\n      \"price\": 150\n    }\n  ],\n  \"totalAmount\": 430,\n  \"deliveryAddress\": \"Hostel Block A, Room 302, CHARUSAT Campus, Changa\",\n  \"status\": \"pending\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/v1/orders",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "v1", "orders"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "4. Get Customer Orders (Populated)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{JWT_TOKEN}}" }
+        ],
+        "url": {
+          "raw": "http://localhost:5000/api/v1/orders",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "v1", "orders"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "5. Update Order Status (PATCH)",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{JWT_TOKEN}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"preparing\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/v1/orders/{{ORDER_ID}}/status",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "v1", "orders", "{{ORDER_ID}}", "status"]
+        }
+      },
+      "response": []
+    }
+  ]
+}
