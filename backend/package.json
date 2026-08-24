@@ -9,7 +9,8 @@
     "seed": "node seeds/seedData.js",
     "test": "node tests/testApi.js",
     "test:rigorous": "node tests/rigorousTestSuite.js",
-    "test:task5": "node tests/verifyTask5.js"
+    "test:task5": "node tests/verifyTask5.js",
+    "test:tasks234": "node tests/verifyTasks234.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

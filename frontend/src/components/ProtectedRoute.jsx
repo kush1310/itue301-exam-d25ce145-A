@@ -7,7 +7,7 @@
  *
  * @param  {Object} props
  * @param  {React.ReactNode} props.children     - Child page element to render upon authorization
- * @param  {string} [props.requiredRole]        - Optional role requirement ('Admin' | 'Customer')
+ * @param  {string} [props.requiredRole]        - Optional role requirement ('Admin' | 'Customer' | 'Restaurant Owner')
  * @returns {JSX.Element}
  */
 
@@ -28,13 +28,13 @@ const ProtectedRoute = ({ children, requiredRole }) => {
     );
   }
 
-  // Task 2: Unauthenticated users are redirected to /
+  // Task 2 Requirement: A ProtectedRoute wrapper must redirect unauthenticated users to / when they try to reach /order
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/" state={{ from: location }} replace />;
   }
 
-  // RBAC Enforcement: Prevent customers from accessing Admin routes and vice versa
-  if (requiredRole && customer?.role !== requiredRole) {
+  // RBAC Enforcement: Prevent customers from accessing Admin / Owner routes and vice versa
+  if (requiredRole && customer?.role !== requiredRole && customer?.role !== 'Admin') {
     return <Navigate to="/" replace />;
   }
 
